@@ -8,19 +8,19 @@
 
 include $(top_srcdir)/common.mk
 
-lib_LTLIBRARIES = libnice.la
+lib_LTLIBRARIES = libnice0.1.10.la
 
-libnice_la_SOURCES =
-libnice_la_DEPENDENCIES = \
+libnice0_1_10_la_SOURCES =
+libnice0_1_10_la_DEPENDENCIES = \
 	$(top_builddir)/agent/libagent.la \
 	libnice.sym
 
-libnice_la_LIBADD = \
+libnice0_1_10_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GUPNP_LIBS) \
 	$(top_builddir)/agent/libagent.la
 
-libnice_la_LDFLAGS = \
+libnice0_1_10_la_LDFLAGS = \
 	-export-symbols $(srcdir)/libnice.sym \
 	$(LIBNICE_LT_LDFLAGS)
 
@@ -60,5 +60,5 @@ EXTRA_DIST = $(check_SCRIPTS) libnice.sym libnice.ver
 pkginclude_HEADERS = nice.h
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = nice.pc
+pkgconfig_DATA = nice0.1.10.pc
 

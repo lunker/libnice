@@ -1,0 +1,4 @@
+usr/lib/*/libnice0.1.10.so
+usr/lib/*/pkgconfig/nice0.1.10.pc
+usr/include/stun usr/include/nice0.1.10/stun
+usr/include/nice usr/include/nice0.1.10/nice

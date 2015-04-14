@@ -1,3 +1,9 @@
+libnice0.1.10 (0.1.10.1~0) unstable; urgency=medium
+
+  * Change package name to avoid collisions
+
+ -- Jose Antonio Santos Cadenas <santoscadenas@gmail.com>  Tue, 14 Apr 2015 00:02:55 +0200
+
 libnice (0.1.10.1~0) unstable; urgency=medium
 
   [ Simon McVittie ]

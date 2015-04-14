@@ -4,10 +4,10 @@ libdir=@libdir@
 includedir=@includedir@
 upnp_enabled=@UPNP_ENABLED@
 
-Name: libnice
-Description: ICE library
+Name: libnice0.1.10
+Description: ICE library version 0.1.10
 Version: @VERSION@
 Requires: @NICE_PACKAGES_PUBLIC@ @GUPNP_PACKAGES_PUBLIC@
 Requires.private: @NICE_PACKAGES_PRIVATE@ @GUPNP_PACKAGES_PRIVATE@
-Libs: -L${libdir} -lnice
-Cflags: -I${includedir}/nice -I${includedir}
+Libs: -L${libdir} -lnice0.1.10
+Cflags: -I${includedir}/nice0.1.10/nice -I${includedir}/nice0.1.10

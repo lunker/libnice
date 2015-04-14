@@ -14,7 +14,7 @@ AM_CFLAGS = $(LIBNICE_CFLAGS) \
 	-I $(top_srcdir)/stun
 
 COMMON_LIBADD = \
-	$(top_builddir)/nice/libnice.la
+	$(top_builddir)/nice/libnice0.1.10.la
 
 # libgstnice
 
@@ -36,6 +36,23 @@ libgstnice_la_LIBADD = 	$(COMMON_LIBADD) $(GST_LIBS)
 libgstnice_la_LDFLAGS = -module -avoid-version -no-undefined
 endif
 
+if WITH_GSTREAMER105
+gstplugin105_LTLIBRARIES = libgstnice105.la
+
+libgstnice105_la_CFLAGS = $(AM_CFLAGS) $(GST_CFLAGS) -DGST_USE_UNSTABLE_API
+
+libgstnice105_la_SOURCES = \
+	gstnicesrc.h \
+	gstnicesrc.c \
+	gstnicesink.h \
+	gstnicesink.c \
+	gstnice.h \
+	gstnice.c
+
+libgstnice105_la_LIBADD = 	$(COMMON_LIBADD) $(GST_LIBS)
+
+libgstnice105_la_LDFLAGS = -module -avoid-version -no-undefined
+endif
 
 if WITH_GSTREAMER010
 gstplugin010_LTLIBRARIES = libgstnice010.la

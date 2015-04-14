@@ -22,7 +22,7 @@ AC_CONFIG_FILES([
 	stun/tools/Makefile
 	socket/Makefile
 	nice/Makefile
-	nice/nice.pc
+	nice/nice0.1.10.pc
 	random/Makefile
 	gst/Makefile
 	docs/Makefile
@@ -79,7 +79,7 @@ AC_C_RESTRICT
 AC_C_VARARRAYS
 AC_HEADER_ASSERT
 AC_HEADER_STDBOOL
-AH_VERBATIM([_FORTIFY_SOURCE], 
+AH_VERBATIM([_FORTIFY_SOURCE],
 [/* Define to `2' to get GNU/libc warnings. */
 /* Only define if -O1 or more is enabled */
 #if defined __OPTIMIZE__ && __OPTIMIZE__ > 0
@@ -193,15 +193,53 @@ AC_SUBST([NICE_PACKAGES])
 
 PKG_CHECK_MODULES(GLIB, [$NICE_PACKAGES])
 
-AC_ARG_WITH(gstreamer, 
+AC_ARG_WITH(gstreamer-1.5,
+	AS_HELP_STRING([--with-gstreamer-1.5],[build GStreamer 1.5 plugin]),
+	[with_gstreamer105=${withval}],
+	[with_gstreamer105=auto])
+
+AC_ARG_WITH(gstreamer,
 	AS_HELP_STRING([--with-gstreamer],[build GStreamer plugin]),
 	[with_gstreamer=${withval}],
 	[with_gstreamer=auto])
 
-AC_ARG_WITH(gstreamer-0.10, 
+AC_ARG_WITH(gstreamer-0.10,
 	AS_HELP_STRING([--with-gstreamer-0.10],[build GStreamer 0.10 plugin]),
 	[with_gstreamer010=${withval}],
 	[with_gstreamer010=auto])
+
+AS_IF([test "$with_gstreamer105" != no], [
+
+	PKG_CHECK_MODULES(GST, [
+		gstreamer-1.5
+		gstreamer-base-1.5
+		],
+		[
+		with_gstreamer105=yes
+		GST_MAJORMINOR=1.5
+		gstplugin105dir="\$(libdir)/gstreamer-$GST_MAJORMINOR"
+		],
+		[
+		AS_IF([test "$with_gstreamer105" = yes], [
+			AC_MSG_ERROR([GStreamer 1.5 support was requested but GStreamer 1.5 libraries are not available])
+		])
+
+		with_gstreamer105=no
+		])
+
+	PKG_CHECK_MODULES(GST_CHECK, [
+		gstreamer-check-1.5
+		],
+		[
+		have_gst_check105=yes
+		],
+		[
+		have_gst_check105=no
+		])
+
+	AM_CONDITIONAL(HAVE_GST_CHECK, test "$have_gst_check105" = yes)
+
+])
 
 AS_IF([test "$with_gstreamer" != no], [
 
@@ -237,7 +275,7 @@ AS_IF([test "$with_gstreamer" != no], [
 ])
 
 AS_IF([test "$with_gstreamer010" != no], [
-  
+
 	PKG_CHECK_MODULES(GST010, [
 		gstreamer-0.10 >= 0.10.10
 		gstreamer-base-0.10 >= 0.10.10
@@ -256,9 +294,11 @@ AS_IF([test "$with_gstreamer010" != no], [
 		])
 ])
 
+AC_SUBST(gstplugin105dir)
 AC_SUBST(gstplugindir)
 AC_SUBST(gstplugin010dir)
 
+AM_CONDITIONAL(WITH_GSTREAMER105, test "$with_gstreamer105" = yes)
 AM_CONDITIONAL(WITH_GSTREAMER, test "$with_gstreamer" = yes)
 AM_CONDITIONAL(WITH_GSTREAMER010, test "$with_gstreamer010" = yes)
 
