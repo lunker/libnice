@@ -84,6 +84,11 @@ gst_nice_src_change_state (
     GstElement * element,
     GstStateChange transition);
 
+static gboolean
+gst_nice_src_post_message (
+    GstElement * element,
+    GstMessage *message);
+
 static GstStaticPadTemplate gst_nice_src_src_template =
 GST_STATIC_PAD_TEMPLATE (
     "src",
@@ -126,6 +131,7 @@ gst_nice_src_class_init (GstNiceSrcClass *klass)
 
   gstelement_class = (GstElementClass *) klass;
   gstelement_class->change_state = gst_nice_src_change_state;
+  gstelement_class->post_message = gst_nice_src_post_message;
 
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&gst_nice_src_src_template));
@@ -177,8 +183,6 @@ gst_nice_src_init (GstNiceSrc *src)
   src->agent = NULL;
   src->stream_id = 0;
   src->component_id = 0;
-  src->mainctx = g_main_context_new ();
-  src->mainloop = g_main_loop_new (src->mainctx, FALSE);
   src->unlocked = FALSE;
   src->idle_source = NULL;
   src->outbufs = g_queue_new ();
@@ -205,9 +209,15 @@ gst_nice_src_read_callback (NiceAgent *agent,
   buffer = gst_buffer_new_and_alloc (len);
   memcpy (GST_BUFFER_DATA (buffer), buf, len);
 #endif
+
   GST_OBJECT_LOCK (nicesrc);
   g_queue_push_tail (nicesrc->outbufs, buffer);
-  g_main_loop_quit (nicesrc->mainloop);
+
+  if (nicesrc->schedule_task) {
+    gst_task_schedule (GST_PAD_TASK (GST_BASE_SRC_PAD (nicesrc)));
+  } else if (nicesrc->mainloop) {
+    g_main_loop_quit (nicesrc->mainloop);
+  }
   GST_OBJECT_UNLOCK (nicesrc);
 }
 
@@ -216,8 +226,10 @@ gst_nice_src_unlock_idler (gpointer data)
 {
   GstNiceSrc *nicesrc = GST_NICE_SRC (data);
 
+  g_assert (!nicesrc->schedule_task);
+
   GST_OBJECT_LOCK (nicesrc);
-  if (nicesrc->unlocked)
+  if (nicesrc->unlocked && nicesrc->mainloop)
     g_main_loop_quit (nicesrc->mainloop);
 
   if (nicesrc->idle_source) {
@@ -238,13 +250,16 @@ gst_nice_src_unlock (GstBaseSrc *src)
   GST_OBJECT_LOCK (src);
   nicesrc->unlocked = TRUE;
 
-  g_main_loop_quit (nicesrc->mainloop);
+  if (!nicesrc->schedule_task) {
+    if (nicesrc->mainloop)
+      g_main_loop_quit (nicesrc->mainloop);
 
-  if (!nicesrc->idle_source) {
-    nicesrc->idle_source = g_idle_source_new ();
-    g_source_set_priority (nicesrc->idle_source, G_PRIORITY_HIGH);
-    g_source_set_callback (nicesrc->idle_source, gst_nice_src_unlock_idler, src, NULL);
-    g_source_attach (nicesrc->idle_source, g_main_loop_get_context (nicesrc->mainloop));
+    if (!nicesrc->idle_source && nicesrc->mainloop) {
+      nicesrc->idle_source = g_idle_source_new ();
+      g_source_set_priority (nicesrc->idle_source, G_PRIORITY_HIGH);
+      g_source_set_callback (nicesrc->idle_source, gst_nice_src_unlock_idler, src, NULL);
+      g_source_attach (nicesrc->idle_source, g_main_loop_get_context (nicesrc->mainloop));
+    }
   }
   GST_OBJECT_UNLOCK (src);
 
@@ -259,6 +274,7 @@ gst_nice_src_unlock_stop (GstBaseSrc *src)
   GST_OBJECT_LOCK (src);
   nicesrc->unlocked = FALSE;
   if (nicesrc->idle_source) {
+    g_assert (!nicesrc->schedule_task);
     g_source_destroy (nicesrc->idle_source);
     g_source_unref(nicesrc->idle_source);
   }
@@ -286,14 +302,27 @@ gst_nice_src_create (
     return GST_FLOW_WRONG_STATE;
 #endif
   }
+
   if (g_queue_is_empty (nicesrc->outbufs)) {
-    GST_OBJECT_UNLOCK (basesrc);
-    g_main_loop_run (nicesrc->mainloop);
-    GST_OBJECT_LOCK (basesrc);
+    if (nicesrc->schedule_task) {
+      gst_task_unschedule (GST_PAD_TASK (GST_BASE_SRC_PAD (nicesrc)));
+      GST_OBJECT_UNLOCK (basesrc);
+      *buffer = NULL;
+      g_assert_not_reached ();
+      return GST_FLOW_OK;
+    } else if (nicesrc->mainloop) {
+      GST_OBJECT_UNLOCK (basesrc);
+      g_main_loop_run (nicesrc->mainloop);
+      GST_OBJECT_LOCK (basesrc);
+    }
   }
 
   *buffer = g_queue_pop_head (nicesrc->outbufs);
-  GST_OBJECT_UNLOCK (basesrc);
+
+  if (nicesrc->schedule_task) {
+    gst_task_unschedule (GST_PAD_TASK (GST_BASE_SRC_PAD (nicesrc)));
+  }
+  GST_OBJECT_UNLOCK (nicesrc);
 
   if (*buffer != NULL) {
     GST_LOG_OBJECT (nicesrc, "Got buffer, pushing");
@@ -397,6 +426,41 @@ gst_nice_src_get_property (
     }
 }
 
+
+static gboolean
+gst_nice_src_post_message (GstElement * element, GstMessage *message)
+{
+  GstNiceSrc *src;
+  gboolean ret;
+
+  src = GST_NICE_SRC (element);
+
+  gst_message_ref (message);
+  ret = GST_ELEMENT_CLASS (gst_nice_src_parent_class)->post_message (element, message);
+
+  if (GST_MESSAGE_TYPE (message) == GST_MESSAGE_STREAM_STATUS) {
+    GstStreamStatusType type;
+
+    gst_message_parse_stream_status (message, &type, NULL);
+    if (type == GST_STREAM_STATUS_TYPE_CREATE) {
+      src->schedule_task =
+          gst_task_get_scheduleable (GST_PAD_TASK (GST_BASE_SRC_PAD (src)));
+      GST_OBJECT_LOCK (src);
+      /* We start unscheduled until we have data */
+      if (g_queue_is_empty (src->outbufs)) {
+        gst_task_unschedule (GST_PAD_TASK (GST_BASE_SRC_PAD (src)));
+      }
+      GST_OBJECT_UNLOCK (src);
+
+      GST_DEBUG_OBJECT (src, "Scheduling task %d", src->schedule_task);
+    }
+  }
+
+  gst_message_unref (message);
+
+  return ret;
+}
+
 static GstStateChangeReturn
 gst_nice_src_change_state (GstElement * element, GstStateChange transition)
 {
@@ -426,14 +490,30 @@ gst_nice_src_change_state (GstElement * element, GstStateChange transition)
             return GST_STATE_CHANGE_FAILURE;
           }
       break;
-    case GST_STATE_CHANGE_PAUSED_TO_READY:
+    case GST_STATE_CHANGE_PAUSED_TO_READY: {
+      if (src->schedule_task) {
+        GstTask *task = GST_PAD_TASK (GST_BASE_SRC_PAD (src));
+        GstTaskPool *pool = gst_task_get_pool (task);
+        gst_task_pool_need_schedule_thread (pool, FALSE);
+        gst_object_unref (pool);
+      }
+
       nice_agent_attach_recv (src->agent, src->stream_id, src->component_id,
           src->mainctx, NULL, NULL);
+
+      if (src->mainloop)
+        g_main_loop_unref (src->mainloop);
+      src->mainloop = NULL;
+
+      if (src->mainctx)
+        g_main_context_unref (src->mainctx);
+      src->mainctx = NULL;
       GST_OBJECT_LOCK (src);
       g_queue_foreach (src->outbufs, (GFunc) gst_buffer_unref, NULL);
       g_queue_clear (src->outbufs);
       GST_OBJECT_UNLOCK (src);
       break;
+    }
     case GST_STATE_CHANGE_READY_TO_PAUSED:
     case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
     case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
@@ -444,9 +524,21 @@ gst_nice_src_change_state (GstElement * element, GstStateChange transition)
 
   ret = GST_ELEMENT_CLASS (gst_nice_src_parent_class)->change_state (element,
       transition);
+  if (ret == GST_STATE_CHANGE_FAILURE)
+    return ret;
 
   switch (transition) {
     case GST_STATE_CHANGE_READY_TO_PAUSED:
+      if (src->schedule_task) {
+        GstTask *task = GST_PAD_TASK (GST_BASE_SRC_PAD (src));
+        GstTaskPool *pool = gst_task_get_pool (task);
+        gst_task_pool_need_schedule_thread (pool, TRUE);
+        src->mainctx = gst_task_pool_get_schedule_context (pool);
+        gst_object_unref (pool);
+      } else {
+        src->mainctx = g_main_context_new ();
+        src->mainloop = g_main_loop_new (src->mainctx, FALSE);
+      }
       nice_agent_attach_recv (src->agent, src->stream_id, src->component_id,
           src->mainctx, gst_nice_src_read_callback, (gpointer) src);
       break;

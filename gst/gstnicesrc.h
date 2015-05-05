@@ -70,6 +70,8 @@ struct _GstNiceSrc
   GQueue *outbufs;
   gboolean unlocked;
   GSource *idle_source;
+
+  gboolean schedule_task;
 };
 
 typedef struct _GstNiceSrcClass GstNiceSrcClass;
