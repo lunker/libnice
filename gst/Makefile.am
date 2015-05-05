@@ -14,16 +14,16 @@ AM_CFLAGS = $(LIBNICE_CFLAGS) \
 	-I $(top_srcdir)/stun
 
 COMMON_LIBADD = \
-	$(top_builddir)/nice/libnice0.1.10.la
+	$(top_builddir)/nice/libkmsnice.la
 
-# libgstnice
+# libgstkmsnice
 
 if WITH_GSTREAMER
-gstplugin_LTLIBRARIES = libgstnice.la
+gstplugin_LTLIBRARIES = libgstkmsnice.la
 
-libgstnice_la_CFLAGS = $(AM_CFLAGS) $(GST_CFLAGS) -DGST_USE_UNSTABLE_API
+libgstkmsnice_la_CFLAGS = $(AM_CFLAGS) $(GST_CFLAGS) -DGST_USE_UNSTABLE_API
 
-libgstnice_la_SOURCES = \
+libgstkmsnice_la_SOURCES = \
 	gstnicesrc.h \
 	gstnicesrc.c \
 	gstnicesink.h \
@@ -31,17 +31,17 @@ libgstnice_la_SOURCES = \
 	gstnice.h \
 	gstnice.c
 
-libgstnice_la_LIBADD = 	$(COMMON_LIBADD) $(GST_LIBS)
+libgstkmsnice_la_LIBADD = 	$(COMMON_LIBADD) $(GST_LIBS)
 
-libgstnice_la_LDFLAGS = -module -avoid-version -no-undefined
+libgstkmsnice_la_LDFLAGS = -module -avoid-version -no-undefined
 endif
 
 if WITH_GSTREAMER105
-gstplugin105_LTLIBRARIES = libgstnice105.la
+gstplugin105_LTLIBRARIES = libgstkmsnice105.la
 
-libgstnice105_la_CFLAGS = $(AM_CFLAGS) $(GST_CFLAGS) -DGST_USE_UNSTABLE_API
+libgstkmsnice105_la_CFLAGS = $(AM_CFLAGS) $(GST_CFLAGS) -DGST_USE_UNSTABLE_API
 
-libgstnice105_la_SOURCES = \
+libgstkmsnice105_la_SOURCES = \
 	gstnicesrc.h \
 	gstnicesrc.c \
 	gstnicesink.h \
@@ -49,17 +49,17 @@ libgstnice105_la_SOURCES = \
 	gstnice.h \
 	gstnice.c
 
-libgstnice105_la_LIBADD = 	$(COMMON_LIBADD) $(GST_LIBS)
+libgstkmsnice105_la_LIBADD = 	$(COMMON_LIBADD) $(GST_LIBS)
 
-libgstnice105_la_LDFLAGS = -module -avoid-version -no-undefined
+libgstkmsnice105_la_LDFLAGS = -module -avoid-version -no-undefined
 endif
 
 if WITH_GSTREAMER010
-gstplugin010_LTLIBRARIES = libgstnice010.la
+gstplugin010_LTLIBRARIES = libgstkmsnice010.la
 
-libgstnice010_la_CFLAGS = $(AM_CFLAGS) $(GST010_CFLAGS)
+libgstkmsnice010_la_CFLAGS = $(AM_CFLAGS) $(GST010_CFLAGS)
 
-libgstnice010_la_SOURCES = \
+libgstkmsnice010_la_SOURCES = \
 	gstnicesrc.h \
 	gstnicesrc.c \
 	gstnicesink.h \
@@ -67,7 +67,7 @@ libgstnice010_la_SOURCES = \
 	gstnice.h \
 	gstnice.c
 
-libgstnice010_la_LIBADD = $(COMMON_LIBADD) $(GST010_LIBS)
+libgstkmsnice010_la_LIBADD = $(COMMON_LIBADD) $(GST010_LIBS)
 
-libgstnice010_la_LDFLAGS = -module -avoid-version -no-undefined
+libgstkmsnice010_la_LDFLAGS = -module -avoid-version -no-undefined
 endif

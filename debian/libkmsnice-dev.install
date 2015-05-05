@@ -1,0 +1,4 @@
+usr/lib/*/libkmsnice.so
+usr/lib/*/pkgconfig/kmsnice.pc
+usr/include/stun usr/include/kmsnice/stun
+usr/include/nice usr/include/kmsnice/nice

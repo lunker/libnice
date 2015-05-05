@@ -8,19 +8,19 @@
 
 include $(top_srcdir)/common.mk
 
-lib_LTLIBRARIES = libnice0.1.10.la
+lib_LTLIBRARIES = libkmsnice.la
 
-libnice0_1_10_la_SOURCES =
-libnice0_1_10_la_DEPENDENCIES = \
+libkmsnice_la_SOURCES =
+libkmsnice_la_DEPENDENCIES = \
 	$(top_builddir)/agent/libagent.la \
 	libnice.sym
 
-libnice0_1_10_la_LIBADD = \
+libkmsnice_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GUPNP_LIBS) \
 	$(top_builddir)/agent/libagent.la
 
-libnice0_1_10_la_LDFLAGS = \
+libkmsnice_la_LDFLAGS = \
 	-export-symbols $(srcdir)/libnice.sym \
 	$(LIBNICE_LT_LDFLAGS)
 
@@ -60,5 +60,5 @@ EXTRA_DIST = $(check_SCRIPTS) libnice.sym libnice.ver
 pkginclude_HEADERS = nice.h
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = nice0.1.10.pc
+pkgconfig_DATA = kmsnice.pc
 

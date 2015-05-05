@@ -1,4 +1,4 @@
-Source: libnice0.1.10
+Source: libkmsnice
 Section: libs
 Priority: optional
 Maintainer: Debian Telepathy maintainers <pkg-telepathy-maintainers@lists.alioth.debian.org>
@@ -19,7 +19,7 @@ Homepage: http://nice.freedesktop.org/
 Vcs-Git: git://anonscm.debian.org/pkg-telepathy/libnice.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-telepathy/libnice.git
 
-Package: libnice15-0.1.10
+Package: libkmsnice
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Pre-Depends: ${misc:Pre-Depends}
@@ -37,10 +37,10 @@ Description: ICE library (shared library)
  .
  This package provides the nice library.
 
-Package: libnice0.1.10-dev
+Package: libkmsnice-dev
 Section: libdevel
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libnice15-0.1.10 (= ${binary:Version}), libglib2.0-dev (>= 2.10), libgupnp-igd-1.0-dev (>= 0.2.4)
+Depends: ${shlibs:Depends}, ${misc:Depends}, libkmsnice (= ${binary:Version}), libglib2.0-dev (>= 2.10), libgupnp-igd-1.0-dev (>= 0.2.4)
 Description: ICE library (development files)
  Nice is an implementation of the IETF's draft Interactive Connectivity
  Establishment standard (ICE).  ICE is useful for applications that want to
@@ -54,7 +54,7 @@ Description: ICE library (development files)
  .
  This package provides development files for nice.
 
-Package: gstreamer1.5-nice0.1.10
+Package: gstreamer1.5-kmsnice
 Section: net
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -72,7 +72,7 @@ Description: ICE library (GStreamer plugin)
  .
  This package provides a GStreamer 1.5 plugin for nice.
 
-Package: libnice0.1.10-doc
+Package: libkmsnice-doc
 Section: doc
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -89,11 +89,11 @@ Description: ICE library (documentation)
  .
  This package contains documentation for libnice.
 
-Package: libnice0.1.10-dbg
+Package: libkmsnice-dbg
 Section: debug
 Priority: extra
 Architecture: any
-Depends: ${misc:Depends}, libnice15-0.1.10 (= ${binary:Version})
+Depends: ${misc:Depends}, libkmsnice (= ${binary:Version})
 Multi-Arch: same
 Description: ICE library (debugging symbols)
  Nice is an implementation of the IETF's draft Interactive Connectivity

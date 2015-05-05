@@ -22,7 +22,7 @@ AC_CONFIG_FILES([
 	stun/tools/Makefile
 	socket/Makefile
 	nice/Makefile
-	nice/nice0.1.10.pc
+	nice/kmsnice.pc
 	random/Makefile
 	gst/Makefile
 	docs/Makefile

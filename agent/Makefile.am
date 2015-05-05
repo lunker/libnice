@@ -9,8 +9,8 @@
 include $(top_srcdir)/common.mk
 
 AM_CFLAGS = \
-	-DG_LOG_DOMAIN=\"libnice\" \
-	$(LIBNICE_CFLAGS) \
+	-DG_LOG_DOMAIN=\"libkmsnice\" \
+	$(LIBKMSNICE_CFLAGS) \
 	$(GLIB_CFLAGS) \
 	$(GUPNP_CFLAGS) \
 	-I $(top_srcdir) \
@@ -92,13 +92,13 @@ INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 if HAVE_INTROSPECTION
 introspection_sources = $(pkginclude_HEADERS)
 
-Nice-0.1.10.gir: libagent.la
-Nice_0_1_10_gir_INCLUDES = GObject-2.0 Gio-2.0
-Nice_0_1_10_gir_EXPORT_PACKAGES = nice0.1.10
-Nice_0_1_10_gir_CFLAGS = $(AM_CFLAGS)
-Nice_0_1_10_gir_LIBS = libagent.la
-Nice_0_1_10_gir_FILES = $(introspection_sources)
-INTROSPECTION_GIRS += Nice-0.1.10.gir
+KmsNice-0.1.gir: libagent.la
+KmsNice_0_1_gir_INCLUDES = GObject-2.0 Gio-2.0
+KmsNice_0_1_gir_EXPORT_PACKAGES = kmsnice0.1
+KmsNice_0_1_gir_CFLAGS = $(AM_CFLAGS)
+KmsNice_0_1_gir_LIBS = libagent.la
+KmsNice_0_1_gir_FILES = $(introspection_sources)
+INTROSPECTION_GIRS += KmsNice-0.1.gir
 
 girdir = $(datadir)/gir-1.0
 gir_DATA = $(INTROSPECTION_GIRS)
