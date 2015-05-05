@@ -44,6 +44,10 @@
 
 #include <agent.h>
 
+#if GLIB_CHECK_VERSION(2, 36, 0)
+#include <gio/gnetworking.h>
+#endif
+
 static GMainLoop *gloop;
 static GIOChannel* io_stdin;
 static guint stream_id;
@@ -101,12 +105,18 @@ main(int argc, char *argv[])
     g_debug("Using stun server '[%s]:%u'\n", stun_addr, stun_port);
   }
 
-#if !GLIB_CHECK_VERSION(2, 36, 0)
+#if GLIB_CHECK_VERSION(2, 36, 0)
+  g_networking_init();
+#else
   g_type_init();
 #endif
 
   gloop = g_main_loop_new(NULL, FALSE);
+#ifdef G_OS_WIN32
+  io_stdin = g_io_channel_win32_new_fd(_fileno(stdin));
+#else
   io_stdin = g_io_channel_unix_new(fileno(stdin));
+#endif
 
   // Create the nice agent
   agent = nice_agent_new(g_main_loop_get_context (gloop),

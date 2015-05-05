@@ -1,3 +1,22 @@
+libnice 0.1.13 (2015-04-28)
+===========================
+Fix build on non-Windows platforms that don't have getifaddrs()
+Fix build regression on Windows
+
+libnice 0.1.12 (2015-04-22)
+===========================
+Fix regression in SDP parser
+Make examples work on Windows
+Bug fixes on nicesrc
+
+libnice 0.1.11 (2015-04-20)
+===========================
+API: nice_agent_set_local_credentials() for WebRTC
+Nicesink: support GstBufferList
+Better warnings on programming errors
+Build fixes for Solaris and Windows
+Bug and documentation fixes
+
 libnice 0.1.10 (2015-01-28)
 ===========================
 Fix bug on component change on the sink

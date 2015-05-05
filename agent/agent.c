@@ -1003,7 +1003,7 @@ nice_agent_class_init (NiceAgentClass *klass)
   nice_debug_init ();
 }
 
-static void priv_generate_tie_breaker (NiceAgent *agent) 
+static void priv_generate_tie_breaker (NiceAgent *agent)
 {
   nice_rng_generate_bytes (agent->rng, 8, (gchar*)&agent->tie_breaker);
 }
@@ -3160,6 +3160,37 @@ nice_agent_set_remote_credentials (
   return ret;
 }
 
+NICEAPI_EXPORT gboolean
+nice_agent_set_local_credentials (
+  NiceAgent *agent,
+  guint stream_id,
+  const gchar *ufrag,
+  const gchar *pwd)
+{
+  Stream *stream;
+  gboolean ret = FALSE;
+
+  g_return_val_if_fail (NICE_IS_AGENT (agent), FALSE);
+  g_return_val_if_fail (stream_id >= 1, FALSE);
+
+  agent_lock ();
+
+  stream = agent_find_stream (agent, stream_id);
+
+  /* note: oddly enough, ufrag and pwd can be empty strings */
+  if (stream && ufrag && pwd) {
+    g_strlcpy (stream->local_ufrag, ufrag, NICE_STREAM_MAX_UFRAG);
+    g_strlcpy (stream->local_password, pwd, NICE_STREAM_MAX_PWD);
+
+    ret = TRUE;
+    goto done;
+  }
+
+ done:
+  agent_unlock_and_emit (agent);
+  return ret;
+}
+
 
 NICEAPI_EXPORT gboolean
 nice_agent_get_local_credentials (
@@ -4591,7 +4622,7 @@ nice_agent_restart (
   for (i = agent->streams; i; i = i->next) {
     Stream *stream = i->data;
 
-    /* step: reset local credentials for the stream and 
+    /* step: reset local credentials for the stream and
      * clean up the list of remote candidates */
     stream_restart (agent, stream);
   }
@@ -5283,19 +5314,29 @@ nice_agent_set_stream_name (NiceAgent *agent, guint stream_id,
 
   g_return_val_if_fail (NICE_IS_AGENT (agent), FALSE);
   g_return_val_if_fail (stream_id >= 1, FALSE);
+  g_return_val_if_fail (name, FALSE);
+
+  if (strcmp (name, "audio") &&
+      strcmp (name, "video") &&
+      strcmp (name, "text") &&
+      strcmp (name, "application") &&
+      strcmp (name, "message") &&
+      strcmp (name, "image")) {
+    g_critical ("Stream name %s will produce invalid SDP, only \"audio\","
+        " \"video\", \"text\", \"application\", \"image\" and \"message\""
+        " are valid", name);
+  }
 
   agent_lock();
 
-  if (name != NULL) {
-    for (i = agent->streams; i; i = i->next) {
-      Stream *stream = i->data;
+  for (i = agent->streams; i; i = i->next) {
+    Stream *stream = i->data;
 
-      if (stream->id != stream_id &&
-          g_strcmp0 (stream->name, name) == 0)
-        goto done;
-      else if (stream->id == stream_id)
-        stream_to_name = stream;
-    }
+    if (stream->id != stream_id &&
+        g_strcmp0 (stream->name, name) == 0)
+      goto done;
+    else if (stream->id == stream_id)
+      stream_to_name = stream;
   }
 
   if (stream_to_name == NULL)
@@ -5490,7 +5531,7 @@ _generate_stream_sdp (NiceAgent *agent, Stream *stream,
 
   if (include_non_ice) {
     NiceAddress rtp, rtcp;
-    gchar ip4[INET6_ADDRSTRLEN];
+    gchar ip4[INET6_ADDRSTRLEN] = "";
 
     nice_address_init (&rtp);
     nice_address_set_ipv4 (&rtp, 0);
@@ -5611,7 +5652,7 @@ nice_agent_parse_remote_sdp (NiceAgent *agent, const gchar *sdp)
 {
   Stream *current_stream = NULL;
   gchar **sdp_lines = NULL;
-  GSList *l;
+  GSList *l, *stream_item = NULL;
   gint i;
   gint ret = 0;
 
@@ -5632,23 +5673,17 @@ nice_agent_parse_remote_sdp (NiceAgent *agent, const gchar *sdp)
   sdp_lines = g_strsplit (sdp, "\n", 0);
   for (i = 0; sdp_lines && sdp_lines[i]; i++) {
     if (g_str_has_prefix (sdp_lines[i], "m=")) {
-      gchar *name = g_strdup (sdp_lines[i] + 2);
-      gchar *ptr = name;
-
-      while (*ptr != ' ' && *ptr != '\0') ptr++;
-      *ptr = 0;
-
-      current_stream = NULL;
-      for (l = agent->streams; l; l = l->next) {
-        Stream *stream = l->data;
-
-        if (g_strcmp0 (stream->name, name) == 0) {
-          current_stream = stream;
-          break;
-        }
+      if (stream_item == NULL)
+        stream_item = agent->streams;
+      else
+        stream_item = stream_item->next;
+      if (!stream_item) {
+        g_critical("More streams in SDP than in agent");
+        ret = -1;
+        goto done;
       }
-      g_free (name);
-    } else if (g_str_has_prefix (sdp_lines[i], "a=ice-ufrag:")) {
+      current_stream = stream_item->data;
+   } else if (g_str_has_prefix (sdp_lines[i], "a=ice-ufrag:")) {
       if (current_stream == NULL) {
         ret = -1;
         goto done;
