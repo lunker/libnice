@@ -2382,6 +2382,7 @@ nice_agent_add_stream (
 
   agent_lock();
   stream = nice_stream_new (n_components, agent);
+	nice_debug ("### stream contains [%d] components", n_components);
 
   agent->streams = g_slist_append (agent->streams, stream);
   stream->id = agent->next_stream_id++;
@@ -2639,6 +2640,8 @@ nice_agent_gather_candidates (
 
   g_return_val_if_fail (NICE_IS_AGENT (agent), FALSE);
   g_return_val_if_fail (stream_id >= 1, FALSE);
+
+	nice_debug ("### hello, nice!");
 
   agent_lock();
 
@@ -6064,3 +6067,101 @@ nice_agent_get_component_state (NiceAgent *agent,
 
   return state;
 }
+
+/**
+	params::
+		- media_port : selected candidate media port
+*/
+	/*
+	- create stream 
+	- create local candidate using s-c 
+	- 
+	*/
+NICEAPI_EXPORT gboolean
+nice_agent_prepare_session_clustering (NiceAgent *agent,  gchar* host, guint media_port, guint scTransport, guint stream_id) 
+{
+	// agent->streams = g_slist_append (agent->streams, stream_id);
+	enum {
+					ADD_HOST_MIN = 0,
+					ADD_HOST_UDP = ADD_HOST_MIN,
+					ADD_HOST_TCP_ACTIVE,
+					ADD_HOST_TCP_PASSIVE,
+					ADD_HOST_MAX = ADD_HOST_TCP_PASSIVE
+	} add_type;
+
+	NiceStream *niceStream ; 
+	NiceAddress * localCandidateNiceAddress;
+	NiceCandidate *localNiceCandidate;
+	guint cid = 1; // lunker::TODO:: where can i get right cid? what is cid ?
+
+	// NiceComponent *component = nice_stream_find_component_by_id (stream, cid); //lunker::todo:: get right cid
+	// NiceComponent *component;
+	nice_debug ("### prepare objects for session-clustering");
+	// declare
+	// ==================
+
+	// create stream using s-c stream info.
+	niceStream = nice_stream_new (1, agent);
+	agent->streams = g_slist_append (agent->streams, niceStream);
+	nice_debug ("### create NiceStream");
+
+	// get nice component from created nice component 
+	// component = nice_stream_find_component_by_id (niceStream, cid);
+	
+	// =============================================================
+	// create local-candidate using s-c info 
+	
+
+	// create NiceAddress 
+	// set address to vip 
+	// lunker::TODO:: hardcode vip for test 
+	localCandidateNiceAddress = nice_address_new();
+	nice_address_set_from_string (localCandidateNiceAddress, "10.0.1.190");
+	
+	// create local NiceAddress
+	// find NiceComponent on NiceStream
+	// consider only 1 component. cause revive session
+
+	for (add_type = ADD_HOST_MIN; add_type <= ADD_HOST_MAX; add_type++) {
+			NiceCandidateTransport transport;
+
+			// no need. cause make candidate forcely 
+			// HostCandidateResult res = HOST_CANDIDATE_CANT_CREATE_SOCKET;
+
+			if ((agent->use_ice_udp == FALSE && add_type == ADD_HOST_UDP) ||
+					(agent->use_ice_tcp == FALSE && add_type != ADD_HOST_UDP))
+				continue;
+
+			switch (add_type) {
+				default:
+				case ADD_HOST_UDP:
+					transport = NICE_CANDIDATE_TRANSPORT_UDP;
+					break;
+				case ADD_HOST_TCP_ACTIVE:
+					transport = NICE_CANDIDATE_TRANSPORT_TCP_ACTIVE;
+					break;
+				case ADD_HOST_TCP_PASSIVE:
+					transport = NICE_CANDIDATE_TRANSPORT_TCP_PASSIVE;
+					break;
+			}
+		
+			// only handle session clsutered transport type  	
+			if ( transport != scTransport ) 
+				continue;
+		
+			// set NiceAddress port using session-clustered media-port
+			nice_address_set_port (localCandidateNiceAddress, media_port);
+			// call fake_discovery_add_local_host_candidate()  => add NiceCandidate to component->local_candidates. 
+			// :: no need to create fake_xxxx func. using existed function 
+			discovery_add_local_host_candidate (agent, niceStream->id, cid, localCandidateNiceAddress, transport, &localNiceCandidate);
+		
+			// create NiceCandidate (local) using NiceAddress. 
+		
+			// call ice gathering done. (need?) 
+			agent_gathering_done (agent);
+
+	}// end add_type loop 
+	return TRUE;
+}
+
+

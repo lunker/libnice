@@ -171,6 +171,7 @@ static void
 nice_stream_init (NiceStream *stream)
 {
   g_atomic_int_inc (&n_streams_created);
+	nice_debug ("### woiwowowowowowowowowowowowowowowowoowowowowowowowowowowowowowow");
   nice_debug ("Created NiceStream (%u created, %u destroyed)",
       n_streams_created, n_streams_destroyed);
 

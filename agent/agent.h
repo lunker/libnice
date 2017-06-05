@@ -1582,6 +1582,22 @@ nice_agent_get_component_state (NiceAgent *agent,
     guint stream_id,
     guint component_id);
 
+
+/**
+ * nice_agent_get_component_state:
+ * @agent: The #NiceAgent Object
+ * @stream_id: The ID of the stream
+ * @component_id: The ID of the component
+ *
+ * Retrieves the current state of a component.
+ *
+ * Returns: the #NiceComponentState of the component and
+ * %NICE_COMPONENT_STATE_FAILED if the component was invalid.
+ *
+ * Since: 0.1.8
+ */
+gboolean
+nice_agent_prepare_session_clustering (NiceAgent *agent,  gchar* host, guint media_port, guint scTransport, guint stream_id); 
 G_END_DECLS
 
 #endif /* __LIBNICE_AGENT_H__ */

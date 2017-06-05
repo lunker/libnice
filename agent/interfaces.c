@@ -122,7 +122,10 @@ nice_interfaces_get_local_interfaces (void)
 
     if (ifa->ifa_addr->sa_family == AF_INET || ifa->ifa_addr->sa_family == AF_INET6) {
       nice_debug ("Found interface : %s", ifa->ifa_name);
-      interfaces = g_list_prepend (interfaces, g_strdup (ifa->ifa_name));
+			if ( strcmp (ifa->ifa_name, "eth0:1") == 0) {
+				nice_debug ("### found vip interface, %s",ifa->ifa_name);
+				interfaces = g_list_prepend (interfaces, g_strdup (ifa->ifa_name));
+			}
     }
   }
 
@@ -269,20 +272,27 @@ nice_interfaces_get_local_ips (gboolean include_loopback)
 
     nice_debug ("Interface:  %s", ifa->ifa_name);
     nice_debug ("IP Address: %s", addr_string);
-    if ((ifa->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
-      if (include_loopback) {
-        loopbacks = add_ip_to_list (loopbacks, addr_string, TRUE);
-      } else {
-        nice_debug ("Ignoring loopback interface");
-        g_free (addr_string);
-      }
-    } else {
-      if (nice_interfaces_is_private_ip (ifa->ifa_addr))
-        ips = add_ip_to_list (ips, addr_string, TRUE);
-      else
-        ips = add_ip_to_list (ips, addr_string, FALSE);
-    }
-  }
+		if ( strcmp (ifa->ifa_name, "eth0:1") == 0 ) {  
+			nice_debug ("### only add interface eth0:1 ! ");
+			if ((ifa->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
+				if (include_loopback) {
+					loopbacks = add_ip_to_list (loopbacks, addr_string, TRUE);
+				} else {
+					nice_debug ("Ignoring loopback interface");
+					g_free (addr_string);
+				}
+			} else {
+				if (nice_interfaces_is_private_ip (ifa->ifa_addr))
+					ips = add_ip_to_list (ips, addr_string, TRUE);
+				else
+					ips = add_ip_to_list (ips, addr_string, FALSE);
+			} // end loop back if 
+
+		}
+
+
+
+  }// local interface
 
   freeifaddrs (results);
 
@@ -304,6 +314,8 @@ nice_interfaces_get_local_ips (gboolean include_loopback)
   struct ifconf ifc;
   struct sockaddr_in *sa;
   gchar *loopback = NULL;
+
+	nice_debug ("### another nice_interfaces_get_local_ips()");
 
   if ((sockfd = socket (AF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0) {
     nice_debug ("Error : Cannot open socket to retreive interface list");
