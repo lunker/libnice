@@ -2642,6 +2642,7 @@ nice_agent_gather_candidates (
   g_return_val_if_fail (stream_id >= 1, FALSE);
 
 	nice_debug ("### hello, nice!");
+	nice_debug ("### h!");
 
   agent_lock();
 
@@ -3285,7 +3286,6 @@ _set_remote_candidates_locked (NiceAgent *agent, NiceStream *stream,
 
   return added;
 }
-
 
 NICEAPI_EXPORT int
 nice_agent_set_remote_candidates (NiceAgent *agent, guint stream_id, guint component_id, const GSList *candidates)
@@ -6077,7 +6077,7 @@ nice_agent_get_component_state (NiceAgent *agent,
 	- create local candidate using s-c 
 	- 
 	*/
-NICEAPI_EXPORT gboolean
+gboolean
 nice_agent_prepare_session_clustering (NiceAgent *agent,  gchar* host, guint media_port, guint scTransport, guint stream_id) 
 {
 	// agent->streams = g_slist_append (agent->streams, stream_id);
@@ -6097,8 +6097,16 @@ nice_agent_prepare_session_clustering (NiceAgent *agent,  gchar* host, guint med
 	// NiceComponent *component = nice_stream_find_component_by_id (stream, cid); //lunker::todo:: get right cid
 	// NiceComponent *component;
 	nice_debug ("### prepare objects for session-clustering");
+	nice_debug ("### parameter ::");
+	nice_debug ("### host : %s", host);
+	nice_debug ("### media_port : %d", media_port);
+	nice_debug ("### scTransport : %d", scTransport);
+	nice_debug ("### stream_id : %d", stream_id);
+
 	// declare
 	// ==================
+
+  agent_lock ();
 
 	// create stream using s-c stream info.
 	niceStream = nice_stream_new (1, agent);
@@ -6151,16 +6159,21 @@ nice_agent_prepare_session_clustering (NiceAgent *agent,  gchar* host, guint med
 		
 			// set NiceAddress port using session-clustered media-port
 			nice_address_set_port (localCandidateNiceAddress, media_port);
+			nice_debug("### set NiceCandidate Port to %d", media_port);
 			// call fake_discovery_add_local_host_candidate()  => add NiceCandidate to component->local_candidates. 
 			// :: no need to create fake_xxxx func. using existed function 
 			discovery_add_local_host_candidate (agent, niceStream->id, cid, localCandidateNiceAddress, transport, &localNiceCandidate);
+			nice_debug ("### discovery_add_local_host_candidate end ");
 		
 			// create NiceCandidate (local) using NiceAddress. 
 		
 			// call ice gathering done. (need?) 
-			agent_gathering_done (agent);
+			// agent_gathering_done (agent);
 
 	}// end add_type loop 
+	nice_debug ("### prepare_session_clustering end");
+		
+	agent_unlock_and_emit (agent);
 	return TRUE;
 }
 

@@ -685,13 +685,13 @@ nice_agent_get_local_credentials (
  * Returns: The number of candidates added, negative on errors (memory
  * allocation error or invalid component)
  **/
+
 int
 nice_agent_set_remote_candidates (
   NiceAgent *agent,
   guint stream_id,
   guint component_id,
   const GSList *candidates);
-
 
 /**
  * nice_agent_send:
@@ -1584,20 +1584,23 @@ nice_agent_get_component_state (NiceAgent *agent,
 
 
 /**
- * nice_agent_get_component_state:
+ * nice_agent_get_prepare_session_clustering:
  * @agent: The #NiceAgent Object
- * @stream_id: The ID of the stream
- * @component_id: The ID of the component
+ * @host: The ID of the stream
+ * @media_port: The ID of the component
+ * @scTransportt: The ID of the component
+ * @stream_id: The ID of the component
  *
  * Retrieves the current state of a component.
  *
- * Returns: the #NiceComponentState of the component and
- * %NICE_COMPONENT_STATE_FAILED if the component was invalid.
+ * Returns: %FALSE
  *
  * Since: 0.1.8
  */
 gboolean
 nice_agent_prepare_session_clustering (NiceAgent *agent,  gchar* host, guint media_port, guint scTransport, guint stream_id); 
+
+
 G_END_DECLS
 
 #endif /* __LIBNICE_AGENT_H__ */
