@@ -733,7 +733,7 @@ static gboolean priv_conn_keepalive_tick_unlocked (NiceAgent *agent)
 
           buffer_len = stun_usage_bind_create (&stun_agent,
               &stun_message, stun_buffer, sizeof(stun_buffer));
-
+					nice_debug ("### stun_usage_bind_create");
           for (k = component->local_candidates; k; k = k->next) {
             NiceCandidate *candidate = (NiceCandidate *) k->data;
             if (candidate->type == NICE_CANDIDATE_TYPE_HOST &&
@@ -1043,13 +1043,15 @@ static GSList *prune_cancelled_conn_check (GSList *conncheck_list)
 void conn_check_remote_candidates_set(NiceAgent *agent)
 {
   GSList *i, *j, *k, *l, *m, *n;
-
+	nice_debug ("### conn_check_remote_candidates_set() agent->stream length : %d", g_slist_length (agent->streams) );
   for (i = agent->streams; i ; i = i->next) {
     NiceStream *stream = i->data;
+		nice_debug ("### agent->stream->conncheck_list length : %d", g_slist_length (stream->conncheck_list) );
     for (j = stream->conncheck_list; j ; j = j->next) {
       CandidateCheckPair *pair = j->data;
       NiceComponent *component = nice_stream_find_component_by_id (stream, pair->component_id);
       gboolean match = FALSE;
+			nice_debug ("### conn_check_remote_candidates_set;; in loop");
 
       /* performn delayed processing of spec steps section 7.2.1.4,
 	 and section 7.2.1.5 */
@@ -2525,6 +2527,7 @@ static gboolean priv_map_reply_to_discovery_request (NiceAgent *agent, StunMessa
       if (memcmp (discovery_id, response_id, sizeof(StunTransactionId)) == 0) {
         res = stun_usage_bind_process (resp, &sockaddr.addr,
             &socklen, &alternate.addr, &alternatelen);
+				nice_debug ("### stun_usage_bind_process");
         nice_debug ("Agent %p : stun_bind_process/disc for %p res %d.",
             agent, d, (int)res);
 

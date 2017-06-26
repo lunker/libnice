@@ -464,6 +464,25 @@ nice_agent_add_stream (
   guint n_components);
 
 /**
+ * nice_agent_add_stream_fixed_stream_id:
+ * @agent: The #NiceAgent Object
+ * @stream_id: already created stream id 
+ * @n_components: The number of components to add to the stream
+ *
+ * Adds a data stream to @agent containing @n_components components. The
+ * returned stream ID is guaranteed to be positive on success.
+ *
+ * Returns: The ID of the new stream, 0 on failure
+ **/
+guint
+nice_agent_add_stream_fixed_stream_id (
+  NiceAgent *agent,
+	guint stream_id,
+  guint n_components);
+
+
+
+/**
  * nice_agent_remove_stream:
  * @agent: The #NiceAgent Object
  * @stream_id: The ID of the stream to remove
@@ -1598,7 +1617,10 @@ nice_agent_get_component_state (NiceAgent *agent,
  * Since: 0.1.8
  */
 gboolean
-nice_agent_prepare_session_clustering (NiceAgent *agent,  gchar* host, guint media_port, guint scTransport, guint stream_id); 
+nice_agent_set_session_clustering (NiceAgent *agent,  gchar* host, guint media_port, guint scTransport, guint stream_id, guint component_id, gchar * ufrag, gchar * pwd); 
+
+guint 
+nice_agent_get_component_id (NiceAgent *agent, guint stream_id);
 
 
 G_END_DECLS

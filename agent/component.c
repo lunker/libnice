@@ -97,6 +97,8 @@ static void
 socket_source_attach (SocketSource *socket_source, GMainContext *context)
 {
   GSource *source;
+	
+	nice_debug ("### socket_source_attach");
 
   if (socket_source->socket->fileno == NULL)
     return;
@@ -104,13 +106,18 @@ socket_source_attach (SocketSource *socket_source, GMainContext *context)
   /* Create a source. */
   source = g_socket_create_source (socket_source->socket->fileno,
       G_IO_IN, NULL);
+	nice_debug ("### before set callback");
   g_source_set_callback (source, (GSourceFunc) component_io_cb,
       socket_source, NULL);
+
+	nice_debug ("### after set callback");
 
   /* Add the source. */
   nice_debug ("Attaching source %p (socket %p, FD %d) to context %p", source,
       socket_source->socket, g_socket_get_fd (socket_source->socket->fileno),
       context);
+
+  nice_debug ("### created socket addr, port : %s,%d", inet_ntoa (socket_source->socket->addr.s.ip4.sin_addr), socket_source->socket->addr.s.ip4.sin_port);
 
   g_assert (socket_source->source == NULL);
   socket_source->source = source;
@@ -743,6 +750,7 @@ emit_io_callback_cb (gpointer user_data)
   stream_id = component->stream->id;
   component_id = component->id;
 
+	nice_debug ("### emit_io_callback_cb");
   g_mutex_lock (&component->io_mutex);
 
   /* The members of Component are guaranteed not to have changed since this
@@ -815,6 +823,8 @@ nice_component_emit_io_callback (NiceComponent *component,
   stream_id = component->stream->id;
   component_id = component->id;
 
+//	nice_debug ("### nice_component_emit_io_callback");
+
   g_mutex_lock (&component->io_mutex);
   io_callback = component->io_callback;
   io_user_data = component->io_user_data;
@@ -846,6 +856,7 @@ nice_component_emit_io_callback (NiceComponent *component,
     /* Slow path: Current thread doesn’t own the Component’s context at the
      * moment, so schedule the callback in an idle handler. */
     data = io_callback_data_new (buf, buf_len);
+		nice_debug ("### receive message! push to queue");
     g_queue_push_tail (&component->pending_io_messages,
         data);  /* transfer ownership */
 

@@ -272,8 +272,8 @@ nice_interfaces_get_local_ips (gboolean include_loopback)
 
     nice_debug ("Interface:  %s", ifa->ifa_name);
     nice_debug ("IP Address: %s", addr_string);
-		if ( strcmp (ifa->ifa_name, "eth0:1") == 0 ) {  
-			nice_debug ("### only add interface eth0:1 ! ");
+		if ( strcmp (ifa->ifa_name, "eth0:0") == 0 ) {  
+			nice_debug ("### only add interface eth0:0 ! ");
 			if ((ifa->ifa_flags & IFF_LOOPBACK) == IFF_LOOPBACK) {
 				if (include_loopback) {
 					loopbacks = add_ip_to_list (loopbacks, addr_string, TRUE);

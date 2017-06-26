@@ -556,16 +556,30 @@ HostCandidateResult discovery_add_local_host_candidate (
   /* note: candidate username and password are left NULL as stream
      level ufrag/password are used */
   if (transport == NICE_CANDIDATE_TRANSPORT_UDP) {
+		GSocket * tmp;
+		gint tmp_port;
     nicesock = nice_udp_bsd_socket_new (address);
+		nice_debug ("### NICE_CANDIDATE_TRANSPORT_UDP"); 
+		tmp = nicesock->fileno;
+		tmp_port = g_inet_socket_address_get_port( (GInetSocketAddress * ) g_socket_get_local_address(tmp, NULL) );
+		
+		nice_debug ("### parametered address info : <%s:%d>", inet_ntoa (address->s.ip4.sin_addr), address->s.ip4.sin_port );
+		nice_debug ("### parametered address info : <%s>", address->s.addr.sa_data );
+		nice_debug ("### Created nice socket info : <%s:%d>", g_inet_address_to_string ( g_inet_socket_address_get_address ( (GInetSocketAddress * ) g_socket_get_local_address(tmp, NULL) ) )  , tmp_port );
+			
   } else if (transport == NICE_CANDIDATE_TRANSPORT_TCP_ACTIVE) {
     nicesock = nice_tcp_active_socket_new (agent->main_context, address);
+		nice_debug ("### NICE_CANDIDATE_TRANSPORT_TCP_ACTIVE"); 
   } else if (transport == NICE_CANDIDATE_TRANSPORT_TCP_PASSIVE) {
     nicesock = nice_tcp_passive_socket_new (agent->main_context, address);
+		nice_debug ("### NICE_CANDIDATE_TRANSPORT_TCP_PASSIVE");
   } else {
     /* TODO: Add TCP-SO */
+		nice_debug ("### NICE_CANDIDATE_TRANSPORT_TCP_ELSE");
   }
   if (!nicesock) {
     res = HOST_CANDIDATE_CANT_CREATE_SOCKET;
+		nice_debug ("### NICE_CANDIDATE_TRANSPORT ;; cant create socket. goto errors.");
     goto errors;
   }
 
@@ -580,7 +594,9 @@ HostCandidateResult discovery_add_local_host_candidate (
   }
 
   _priv_set_socket_tos (agent, nicesock, stream->tos);
+	nice_debug ("### before nice_component_attach_socket");
   nice_component_attach_socket (component, nicesock);
+	nice_debug ("### After nice_component_attach_socket");
 
   *outcandidate = candidate;
 
@@ -1031,6 +1047,7 @@ static gboolean priv_discovery_tick_unlocked (gpointer pointer)
         if (cand->type == NICE_CANDIDATE_TYPE_SERVER_REFLEXIVE) {
           buffer_len = stun_usage_bind_create (&cand->stun_agent,
               &cand->stun_message, cand->stun_buffer, sizeof(cand->stun_buffer));
+					nice_debug ("### stun_usage_bind_create");
         } else if (cand->type == NICE_CANDIDATE_TYPE_RELAYED) {
           uint8_t *username = (uint8_t *)cand->turn->username;
           gsize username_len = strlen (cand->turn->username);

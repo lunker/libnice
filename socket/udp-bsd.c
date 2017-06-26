@@ -50,7 +50,6 @@
 #include <fcntl.h>
 
 #include "udp-bsd.h"
-
 #ifndef G_OS_WIN32
 #include <unistd.h>
 #endif
@@ -89,9 +88,11 @@ nice_udp_bsd_socket_new (NiceAddress *addr)
 
   if (addr != NULL) {
     nice_address_copy_to_sockaddr(addr, &name.addr);
+	//	nice_debug ("### nice_udp_bsd_socket_new() :: host, port : %s, %d", inet_ntoa (addr->s.ip4.sin_addr), addr->s.ipv4.sin_port );
   } else {
     memset (&name, 0, sizeof (name));
     name.storage.ss_family = AF_UNSPEC;
+//		nice_debug ("### no NiceAddress to parameter");
   }
 
   if (name.storage.ss_family == AF_UNSPEC || name.storage.ss_family == AF_INET) {
@@ -119,7 +120,7 @@ nice_udp_bsd_socket_new (NiceAddress *addr)
   g_socket_set_blocking (gsock, false);
   gaddr = g_socket_address_new_from_native (&name.addr, sizeof (name));
   if (gaddr != NULL) {
-    gret = g_socket_bind (gsock, gaddr, FALSE, NULL);
+    gret = g_socket_bind (gsock, gaddr, TRUE, NULL);
     g_object_unref (gaddr);
   }
 
