@@ -2693,6 +2693,7 @@ nice_agent_gather_candidates (
 
 	nice_debug ("### hello, nice!");
 	nice_debug ("### h!");
+	nice_debug ("### param::stream_id : %d", stream_id);
 
   agent_lock();
 
@@ -6175,6 +6176,7 @@ nice_agent_set_session_clustering (NiceAgent *agent,  gchar* host, guint media_p
 					ADD_HOST_MAX = ADD_HOST_TCP_PASSIVE
 	} add_type;
 
+	NiceStream * nice_stream;
 	NiceAddress * localCandidateNiceAddress;
 	NiceCandidate *localNiceCandidate;
 	//guint cid = 1; // lunker::TODO:: where can i get right cid? what is cid ?// component id;
@@ -6185,18 +6187,22 @@ nice_agent_set_session_clustering (NiceAgent *agent,  gchar* host, guint media_p
 	nice_debug ("### media_port : %d", media_port);
 	nice_debug ("### scTransport : %d", scTransport);
 	nice_debug ("### stream_id : %d", stream_id);
+	nice_debug ("### component_id : %d", component_id);
 
 	// declare
 	// ==================
 	g_return_val_if_fail (NICE_IS_AGENT (agent), FALSE);
-  g_return_val_if_fail (stream_id >= 1, FALSE);
-
+//  g_return_val_if_fail (stream_id >= 1, FALSE);
 
   agent_lock ();
 
-	// create stream using s-c stream info.
-
-	nice_debug ("### create NiceStream");
+	// get nice_stream using session clustered stream id 
+	nice_stream = agent_find_stream (agent, stream_id);
+	if (nice_stream == NULL) {
+    agent_unlock_and_emit (agent);
+		nice_debug ("### no [%d] NiceStream in NiceAgent", stream_id); 
+    return FALSE;
+  }
 
 	// get nice component from created nice component 
 	// component = nice_stream_find_component_by_id (niceStream, cid);
@@ -6207,7 +6213,7 @@ nice_agent_set_session_clustering (NiceAgent *agent,  gchar* host, guint media_p
 
 	// create NiceAddress 
 	// set address to vip 
-	// lunker::TODO:: hardcode vip for test 
+	// lunker::TODO:: hardcode vip(10.0.1.190) for test 
 	localCandidateNiceAddress = nice_address_new();
 	nice_address_set_from_string (localCandidateNiceAddress, "10.0.1.190");
 	
@@ -6240,9 +6246,10 @@ nice_agent_set_session_clustering (NiceAgent *agent,  gchar* host, guint media_p
 			}
 		
 			// only handle session clsutered transport type  	
-			if ( transport != scTransport ) 
+			if ( transport != scTransport ) {
+				nice_debug ("### transport is not supported");
 				continue;
-		
+			}
 			// set NiceAddress port using session-clustered media-port
 			nice_address_set_port (localCandidateNiceAddress, media_port);
 			nice_debug ("####### fuck ufrag : %s", ufrag);
@@ -6272,19 +6279,16 @@ nice_agent_set_session_clustering (NiceAgent *agent,  gchar* host, guint media_p
 			localNiceCandidate->username = g_strdup(ufrag);
 			localNiceCandidate->password = g_strdup(pwd);
 
-//			g_strlcpy (localNiceCandidate->username, ufrag, NICE_STREAM_MAX_UFRAG);
-//			g_strlcpy (localNiceCandidate->password, pwd, NICE_STREAM_MAX_PWD);
 			nice_debug("### set NiceCandidate Port to %d", media_port);
 			nice_debug ("### local candidate ufrag : %s", localNiceCandidate->username);
 			nice_debug ("### local candidate pwd : %s", localNiceCandidate->password);
-
 
 			// set stream state 
 //			niceStream->gathering = TRUE;
 //			niceStream->gathering_started = TRUE;		
 
-			// create NiceCandidate (local) using NiceAddress. 		
-
+				// add for stun server
+				/*
         if (agent->full_mode && agent->stun_server_ip &&
             transport == NICE_CANDIDATE_TRANSPORT_UDP) {
           NiceAddress stun_server;
@@ -6303,9 +6307,11 @@ nice_agent_set_session_clustering (NiceAgent *agent,  gchar* host, guint media_p
                 stream,
                 component_id);
           }
-			}
+				}// end case:: stun server 
+				*/
 
 	}// end add_type loop 
+
 //	niceStream->gathering = TRUE;
 //	niceStream->gathering_started = TRUE;		
 
@@ -6325,7 +6331,6 @@ nice_agent_set_session_clustering (NiceAgent *agent,  gchar* host, guint media_p
   }
 
 	agent_unlock_and_emit (agent);
-//	nice_agent_gather_candidates (agent, stream_id);
 
 	return TRUE;
 }
